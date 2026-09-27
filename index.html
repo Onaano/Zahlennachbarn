@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Zahlennachbarn — Wer wohnt nebenan? | Förderfreude Games</title>
+<style>
+  :root{
+    --cream:#faf3e7;
+    --cream-dark:#eeddc2;
+    --ink:#3a3226;
+    --muted:#7a7062;
+    --panel:#fffcf5;
+    --panel-edge:rgba(58,50,38,.16);
+    --altrosa:#d98a92;
+    --altrosa-dark:#b06670;
+    --salbei:#8fa888;
+    --salbei-dark:#6d8768;
+    --gelb:#eec14a;
+    --gelb-dark:#c99a1f;
+    --terrakotta:#d97e55;
+    --terrakotta-dark:#b45e39;
+    --hellblau:#8fb9c9;
+    --hellblau-dark:#5f93a6;
+    --himmel-oben:#bfe0e8;
+    --himmel-unten:#eef5ea;
+    --strasse:#a6a196;
+    --gruen:#7fae6f;
+    --font-display: ui-rounded, 'Segoe UI Rounded', 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; height:100%; overscroll-behavior:none; }
+  body{
+    font-family:var(--font-body);
+    background:linear-gradient(180deg, var(--himmel-oben) 0%, var(--himmel-unten) 55%, var(--cream) 100%);
+    color:var(--ink);
+    height:100vh; height:100dvh;
+    overflow:hidden;
+    display:flex; flex-direction:column;
+    user-select:none; -webkit-user-select:none;
+  }
+  button{ font-family:inherit; cursor:pointer; border:none; background:none; padding:0; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; } }
+
+  .sky-deco{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .sun{
+    position:absolute; top:3%; right:6%; width:min(14vw,90px); height:min(14vw,90px); border-radius:50%;
+    background:radial-gradient(circle at 35% 32%, #fff6d8, var(--gelb) 55%, var(--gelb-dark) 100%);
+    box-shadow:0 0 40px 14px rgba(238,193,74,.45);
+  }
+  .cloud{ position:absolute; background:#fff; border-radius:999px; opacity:.85; }
+  .cloud::before, .cloud::after{ content:''; position:absolute; background:#fff; border-radius:999px; }
+  .cloud-a{ top:8%; left:6%; width:min(16vw,110px); height:min(6vw,42px); }
+  .cloud-a::before{ width:55%; height:150%; top:-60%; left:8%; }
+  .cloud-a::after{ width:40%; height:120%; top:-45%; right:10%; }
+  .cloud-b{ top:16%; left:32%; width:min(11vw,80px); height:min(4.4vw,30px); opacity:.7; }
+  .cloud-b::before{ width:55%; height:140%; top:-55%; left:10%; }
+  .cloud-b::after{ width:38%; height:110%; top:-40%; right:12%; }
+  .cloud-c{ top:6%; left:58%; width:min(9vw,64px); height:min(3.6vw,26px); opacity:.6; }
+  .cloud-c::before{ width:55%; height:140%; top:-55%; left:10%; }
+  .cloud-c::after{ width:38%; height:110%; top:-40%; right:12%; }
+
+  header{ flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:1.2vh 3vw 0.4vh; gap:2vw; position:relative; z-index:1; }
+  .brand{ font-family:var(--font-display); font-weight:800; font-size:clamp(13px,2vw,18px); color:var(--ink); display:flex; align-items:center; gap:1.2vw; }
+  .header-btns{ display:flex; gap:2vw; }
+  .icon-btn{
+    width:clamp(34px,4.4vw,44px); height:clamp(34px,4.4vw,44px);
+    border-radius:50%; background:var(--panel); border:1.6px solid var(--panel-edge);
+    display:flex; align-items:center; justify-content:center; font-size:clamp(15px,1.9vw,19px);
+    transition:transform .1s ease;
+  }
+  .icon-btn:active{ transform:scale(.9); }
+  .icon-btn[aria-pressed="false"]{ opacity:.5; }
+  .icon-btn:focus-visible{ outline:3px solid var(--hellblau-dark); outline-offset:2px; }
+
+  .screen{ flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; z-index:1; }
+  .screen[hidden]{ display:none; }
+
+  /* ---------- Start ---------- */
+  #screen-start{ gap:1vh; padding:1vh 4vw; text-align:center; width:100%; overflow-y:auto; }
+  .title-big{ font-family:var(--font-display); font-weight:800; font-size:clamp(24px,4.6vw,42px); color:var(--terrakotta-dark); margin:0; letter-spacing:.3px; }
+  .subtitle-big{ font-family:var(--font-display); font-weight:700; font-size:clamp(13px,2vw,18px); color:var(--ink); margin:0; }
+  .intro-line{ font-size:clamp(12px,1.7vw,15px); color:var(--muted); font-weight:600; margin:0 0 .6vh; max-width:480px; }
+
+  .range-choices{ display:flex; gap:2.6vw; flex-wrap:wrap; justify-content:center; max-width:680px; }
+  .range-card{
+    background:var(--panel); border:2.6px solid var(--panel-edge); border-radius:16px 16px 10px 10px;
+    padding:0; min-width:min(160px,32vw); flex:1; overflow:hidden;
+    box-shadow:0 6px 0 rgba(58,50,38,.14);
+    transition:transform .1s ease;
+  }
+  .range-card .roofline{ height:10px; background:var(--terrakotta); }
+  .range-card .card-body{ padding:1.8vh 3vw 2vh; }
+  .range-card .big{ display:block; font-family:var(--font-display); font-weight:800; font-size:clamp(15px,2.3vw,20px); color:var(--ink); }
+  .range-card .sub{ display:block; font-size:clamp(9px,1.3vw,11px); color:var(--muted); font-weight:600; margin-top:.5vh; }
+  .range-card.selected{ border-color:var(--salbei-dark); box-shadow:0 6px 0 var(--salbei-dark); }
+  .range-card.selected .roofline{ background:var(--salbei-dark); }
+  .range-card:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(58,50,38,.14); }
+  .range-card.selected:active{ box-shadow:0 2px 0 var(--salbei-dark); }
+
+  .start-btn{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(17px,2.6vw,23px);
+    color:#fff; background:var(--terrakotta-dark); border-radius:999px; padding:1.7vh 9vw;
+    box-shadow:0 7px 0 #8a4726; transition:transform .1s ease;
+    margin-top:.4vh;
+  }
+  .start-btn:active{ transform:translateY(4px); box-shadow:0 3px 0 #8a4726; }
+  .brand-footer{ font-size:clamp(10px,1.3vw,12px); color:var(--muted); font-weight:700; margin-top:.2vh; }
+
+  /* ---------- Spiel ---------- */
+  #screen-game{ width:100%; gap:0.8vh; padding:0 3vw; padding-bottom:max(9%, 110px); }
+  .progress-row{ display:flex; align-items:center; justify-content:center; gap:1.6vw; }
+  .progress-lights{ display:flex; gap:1vw; }
+  .light-house{ width:clamp(14px,2.4vw,20px); height:clamp(14px,2.4vw,20px); border-radius:3px 3px 0 0; background:var(--panel-edge); transition:background .3s ease, box-shadow .3s ease; position:relative; }
+  .light-house::before{ content:''; position:absolute; left:50%; top:-45%; transform:translateX(-50%); border-left:10px solid transparent; border-right:10px solid transparent; border-bottom:9px solid var(--panel-edge); transition:border-bottom-color .3s ease; }
+  .light-house.lit{ background:var(--gelb); box-shadow:0 0 8px 2px rgba(238,193,74,.7); }
+  .light-house.lit::before{ border-bottom-color:var(--gelb); }
+  .progress-num{ font-family:var(--font-display); font-weight:800; font-size:clamp(11px,1.6vw,15px); color:var(--ink); background:var(--panel); border:1.6px solid var(--panel-edge); border-radius:999px; padding:.4vh 3vw; }
+
+  .task-wrap{ flex:1; min-height:0; width:100%; display:flex; align-items:center; justify-content:center; padding:0.2vh 0; }
+  .task-stage{
+    position:relative; overflow:hidden; border-radius:24px; width:100%; height:100%;
+    background:var(--panel);
+    box-shadow:0 10px 26px -14px rgba(58,50,38,.35);
+    display:flex; flex-direction:column; align-items:center;
+    padding:1.2vh 3vw 1.4vh; gap:0.6vh;
+  }
+  .stage-glow{ position:absolute; inset:0; opacity:.09; pointer-events:none; z-index:0; }
+
+  .prompt-row{ flex-shrink:0; display:flex; align-items:center; gap:2vw; position:relative; z-index:1; }
+  .prompt-text{ font-family:var(--font-display); font-weight:800; font-size:clamp(17px,2.8vw,24px); color:var(--ink); text-align:center; }
+  .speak-btn{
+    flex-shrink:0; width:clamp(34px,4.4vw,42px); height:clamp(34px,4.4vw,42px); border-radius:50%;
+    background:#fdf3d6; border:2px solid var(--gelb-dark); color:var(--gelb-dark);
+    display:flex; align-items:center; justify-content:center; font-size:clamp(14px,2vw,18px);
+    transition:transform .1s ease;
+  }
+  .speak-btn:active{ transform:scale(.9); }
+
+  .task-body{ flex:1; min-height:0; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.8vh; overflow:hidden; position:relative; z-index:1; }
+
+  /* ---------- Strassenszene / Haeuser ---------- */
+  .street-scene{ flex-shrink:1; min-height:0; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+  .houses-row{ display:flex; align-items:flex-end; justify-content:center; gap:2.2vw; width:100%; }
+  .house-slot{ display:flex; flex-direction:column; align-items:center; flex-shrink:1; min-width:0; }
+  .house-svg-wrap{ width:100%; height:100%; }
+  .house-svg-wrap svg{ display:block; width:100%; height:auto; }
+  .house-plate{
+    margin-top:-2%; z-index:2; position:relative;
+    background:var(--panel); border:3px solid var(--ink); border-radius:8px;
+    font-family:var(--font-display); font-weight:800; color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    padding:.4vh 1.4vw; min-width:2.6em; text-align:center;
+    box-shadow:0 3px 0 rgba(58,50,38,.2);
+  }
+  .house-plate.unknown{ color:var(--altrosa-dark); }
+  .house-plate.correct-pulse{ background:#e3efdd; border-color:var(--salbei-dark); animation:plate-pulse .5s ease; }
+  .house-plate.wrong-shake{ animation:shake .4s ease; }
+  .house-plate.target-blink{ animation:target-blink 1.1s ease-in-out infinite; }
+  @keyframes target-blink{ 0%,100%{ opacity:1; box-shadow:0 3px 0 rgba(58,50,38,.2); } 50%{ opacity:.4; box-shadow:0 3px 0 rgba(58,50,38,.2), 0 0 0 4px rgba(238,193,74,.55); } }
+  .side-group.group-locked{ opacity:.35; pointer-events:none; filter:grayscale(.4); transition:opacity .25s ease, filter .25s ease; }
+  .street-ground{ width:100%; height:2.4vh; background:var(--strasse); border-radius:3px; margin-top:.6vh; flex-shrink:0; }
+
+  .streets-compare{ display:flex; flex-direction:column; gap:1.4vh; width:100%; max-width:520px; }
+  .streets-compare.row-mode{ flex-direction:row; justify-content:center; flex-wrap:wrap; }
+  .street-option{
+    display:flex; flex-direction:column; align-items:center; gap:.6vh;
+    border:3px solid var(--panel-edge); border-radius:14px; padding:1.2vh 2vw;
+    transition:transform .1s ease, border-color .15s ease;
+  }
+  .street-option:active{ transform:scale(.98); }
+  .street-option .mini-houses{ display:flex; gap:2vw; align-items:flex-end; }
+  .street-option .mini-house{ display:flex; flex-direction:column; align-items:center; gap:.3vh; width:min(15vw,64px); }
+  .street-option .mini-house-svg{ width:100%; height:auto; display:block; }
+  .street-option .mini-plate{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(14px,2.2vw,19px);
+    background:var(--cream-dark); border:1.6px solid var(--panel-edge); border-radius:6px; padding:.35vh 1.6vw; min-width:2.1em; text-align:center;
+  }
+  .street-option.correct-pulse{ border-color:var(--salbei-dark); background:#e3efdd; animation:plate-pulse .5s ease; }
+  .street-option.wrong-shake{ border-color:var(--altrosa-dark); animation:shake .4s ease; }
+
+  .choice-row{ display:flex; gap:2vw; flex-wrap:wrap; justify-content:center; max-width:560px; }
+  .choice-card{
+    background:var(--panel); border:3px solid var(--panel-edge); border-radius:14px;
+    padding:1.3vh 5vw; display:flex; flex-direction:column; align-items:center; gap:.4vh;
+    box-shadow:0 4px 0 rgba(58,50,38,.12); transition:transform .1s ease;
+    min-width:70px; font-family:var(--font-display); font-weight:800; font-size:clamp(18px,3vw,24px); color:var(--ink);
+  }
+  .choice-card:active{ transform:translateY(3px); }
+  .choice-card.wrong-shake{ animation:shake .4s ease; border-color:var(--altrosa-dark); }
+  .choice-card.correct-pulse{ animation:plate-pulse .5s ease; border-color:var(--salbei-dark); background:#e3efdd; }
+  .choice-card.used{ opacity:.35; pointer-events:none; }
+  .choice-card:focus-visible{ outline:3px solid var(--hellblau-dark); outline-offset:2px; }
+  .street-option:focus-visible{ outline:3px solid var(--hellblau-dark); outline-offset:2px; }
+
+  .side-groups{ display:flex; gap:4vw; justify-content:center; width:100%; flex-wrap:wrap; }
+  .side-group{ display:flex; flex-direction:column; align-items:center; gap:.8vh; }
+  .side-group-label{ font-family:var(--font-display); font-weight:700; font-size:clamp(9px,1.3vw,11px); color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .side-group .choice-row{ max-width:260px; }
+
+  @keyframes shake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-6px); } 75%{ transform:translateX(6px); } }
+  @keyframes plate-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
+
+  .feedback-msg{
+    flex-shrink:0; font-family:var(--font-display); font-weight:700; font-size:clamp(13px,1.9vw,16px);
+    color:var(--altrosa-dark); text-align:center; min-height:1.8em; opacity:0; transition:opacity .2s ease; position:relative; z-index:1;
+  }
+  .feedback-msg.show{ opacity:1; }
+  .feedback-msg.good{ color:var(--salbei-dark); }
+
+  /* ---------- Ende ---------- */
+  #screen-end{ gap:1.4vh; text-align:center; padding:2vh 4vw; overflow-y:auto; width:100%; }
+  .end-title{ font-family:var(--font-display); font-weight:800; font-size:clamp(19px,3.4vw,30px); margin:0; color:var(--ink); }
+  .end-sub{ font-family:var(--font-display); font-weight:700; font-size:clamp(13px,1.9vw,17px); color:var(--terrakotta-dark); margin:0; }
+  .end-actions{ display:flex; gap:3vw; margin-top:.5vh; flex-wrap:wrap; justify-content:center; }
+  .btn-primary{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(13px,1.9vw,16px);
+    color:#fff; background:var(--terrakotta-dark); border-radius:999px; padding:1.7vh 5.2vw;
+    box-shadow:0 8px 18px -8px rgba(180,94,57,.5); transition:transform .1s ease;
+  }
+  .btn-secondary{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(13px,1.9vw,16px);
+    color:var(--ink); background:var(--panel); border:2px solid var(--panel-edge); border-radius:999px; padding:1.7vh 5.2vw;
+    transition:transform .1s ease;
+  }
+  .btn-primary:active, .btn-secondary:active{ transform:scale(.96); }
+  .confetti-canvas{ position:fixed; inset:0; pointer-events:none; z-index:30; }
+
+  @media (max-width:560px){ .end-actions{ flex-direction:column; width:100%; } }
+</style>
+</head>
+<body>
+
+  <div class="sky-deco" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="cloud cloud-a"></div>
+    <div class="cloud cloud-b"></div>
+    <div class="cloud cloud-c"></div>
+  </div>
+
+  <header>
+    <div class="brand">🏘️ Zahlennachbarn</div>
+    <div class="header-btns">
+      <button class="icon-btn" id="btn-sound" aria-label="Ton an/aus" aria-pressed="true">🔊</button>
+    </div>
+  </header>
+
+  <!-- START -->
+  <div class="screen" id="screen-start">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"></svg>
+    <h1 class="title-big">🏘️ Zahlennachbarn</h1>
+    <p class="subtitle-big">„Wer wohnt nebenan?"</p>
+    <p class="intro-line">Entdecke die Nachbarn der Zahlen!</p>
+    <div class="range-choices" id="range-choices">
+      <button class="range-card" data-range="20">
+        <div class="roofline"></div>
+        <div class="card-body"><span class="big">🏠 bis 20</span><span class="sub">Klasse 1</span></div>
+      </button>
+      <button class="range-card" data-range="100">
+        <div class="roofline"></div>
+        <div class="card-body"><span class="big">🏠 bis 100</span><span class="sub">Klasse 2</span></div>
+      </button>
+      <button class="range-card" data-range="1000">
+        <div class="roofline"></div>
+        <div class="card-body"><span class="big">🏠 bis 1000</span><span class="sub">Klasse 3</span></div>
+      </button>
+    </div>
+    <button class="start-btn" id="btn-start">Losspielen</button>
+    <p class="brand-footer">Förderfreude Games</p>
+  </div>
+
+  <!-- SPIEL -->
+  <div class="screen" id="screen-game" hidden>
+    <div class="progress-row">
+      <div class="progress-lights" id="progress-lights"></div>
+      <div class="progress-num"><span id="progress-count">0</span> von 8</div>
+    </div>
+
+    <div class="task-wrap">
+      <div class="task-stage" id="task-stage">
+        <svg class="stage-glow" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <circle cx="6" cy="94" r="30" fill="var(--salbei)"/>
+          <circle cx="95" cy="4" r="22" fill="var(--altrosa)"/>
+          <circle cx="88" cy="80" r="16" fill="var(--gelb)"/>
+          <circle cx="14" cy="10" r="13" fill="var(--hellblau)"/>
+          <circle cx="50" cy="98" r="10" fill="var(--terrakotta)"/>
+        </svg>
+
+        <div class="prompt-row">
+          <button class="speak-btn" id="btn-speak-task" aria-label="Vorlesen">🔊</button>
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+
+        <div class="task-body" id="task-body"></div>
+
+        <div class="feedback-msg" id="feedback-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENDE -->
+  <div class="screen" id="screen-end" hidden>
+    <div id="end-street-wrap" style="width:min(90%,420px);"></div>
+    <h2 class="end-title">Geschafft! 🎉</h2>
+    <p class="end-sub">Du kennst dich in der Zahlenstraße richtig gut aus!</p>
+    <div class="end-actions">
+      <button class="btn-primary" id="btn-again">Noch eine Runde</button>
+      <button class="btn-secondary" id="btn-other-range">Zahlenraum wechseln</button>
+    </div>
+  </div>
+
+  <canvas class="confetti-canvas" id="confetti-canvas" hidden></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  const ROUND_TARGET = 8;
+
+  const state = {
+    range: 20,
+    soundOn: true,
+    progress: 0,
+    locked: false,
+    currentTask: null,
+    usedTypes: []
+  };
+
+  let pendingTimers = [];
+  function after(ms, fn){
+    const id = setTimeout(()=>{
+      pendingTimers = pendingTimers.filter(t=>t!==id);
+      try{ fn(); }
+      catch(err){ state.locked = false; }
+    }, ms);
+    pendingTimers.push(id);
+    return id;
+  }
+  function clearPendingTimers(){ pendingTimers.forEach(id=>clearTimeout(id)); pendingTimers=[]; }
+
+  let lockedSince = null;
+  setInterval(() => {
+    if(state.locked){
+      if(lockedSince===null) lockedSince = Date.now();
+      else if(Date.now()-lockedSince > 4000){ state.locked = false; lockedSince = null; }
+    } else { lockedSince = null; }
+  }, 500);
+
+  const els = {
+    screenStart: document.getElementById('screen-start'),
+    screenGame: document.getElementById('screen-game'),
+    screenEnd: document.getElementById('screen-end'),
+    btnSound: document.getElementById('btn-sound'),
+    btnStart: document.getElementById('btn-start'),
+    progressLights: document.getElementById('progress-lights'),
+    progressCount: document.getElementById('progress-count'),
+    promptText: document.getElementById('prompt-text'),
+    btnSpeakTask: document.getElementById('btn-speak-task'),
+    taskBody: document.getElementById('task-body'),
+    feedbackMsg: document.getElementById('feedback-msg')
+  };
+
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  /* =========================================================
+     BEREICH-AUSWAHL (Start) - erster Bereich vorausgewaehlt,
+     damit der Start-Button sofort funktioniert.
+     ========================================================= */
+  const rangeCards = Array.from(document.querySelectorAll('.range-card'));
+  rangeCards[0].classList.add('selected');
+  rangeCards.forEach(btn => {
+    btn.addEventListener('click', () => {
+      rangeCards.forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.range = parseInt(btn.dataset.range, 10);
+    });
+  });
+
+  /* =========================================================
+     MATHE-HILFSFUNKTIONEN (Kernkorrektheit)
+     ========================================================= */
+  function neighborBase(n, base){
+    // Liefert [unterer, oberer] Nachbar-Vielfaches von 'base'. Ist n selbst ein
+    // volles Vielfaches, werden NICHT n und n+base verwendet, sondern n-base/n+base.
+    if(n % base === 0) return [n-base, n+base];
+    const lower = Math.floor(n/base)*base;
+    return [lower, lower+base];
+  }
+
+  function uniqueDistractors(correct, count, deltaPool, minVal){
+    const opts = new Set([correct]);
+    let guard=0;
+    while(opts.size < count+1 && guard<60){
+      guard++;
+      const d = pick(deltaPool);
+      const cand = correct + d;
+      if(minVal!==undefined && cand<minVal) continue;
+      opts.add(cand);
+    }
+    // Breiterer Rueckfall, falls enge Nachbarschaft nicht genug eindeutige Werte liefert
+    let guard2=0;
+    while(opts.size < count+1 && guard2<60){
+      guard2++;
+      const cand = correct + randInt(-10,10);
+      if(cand===correct) continue;
+      if(minVal!==undefined && cand<minVal) continue;
+      opts.add(cand);
+    }
+    return shuffle(Array.from(opts));
+  }
+
+  /* =========================================================
+     AUFGABEN-GENERATOREN
+     ========================================================= */
+  function genNachbarn(range){
+    const n = randInt(2, range-1);
+    const leftCorrect = n-1, rightCorrect = n+1;
+    const leftOpts = uniqueDistractors(leftCorrect, 2, [-2,-1,1,2], 1);
+    const rightOpts = uniqueDistractors(rightCorrect, 2, [-2,-1,1,2], 1);
+    return { kind:'nachbarn', sceneName:'Wer wohnt nebenan?', mid:n, leftCorrect, rightCorrect, leftOpts, rightOpts };
+  }
+
+  function genMissingHouse(range, kind, sceneName){
+    const start = randInt(1, Math.max(1,range-2));
+    const pos = pick(['left','mid','right']);
+    const triple = [start, start+1, start+2];
+    const answer = pos==='left' ? triple[0] : pos==='mid' ? triple[1] : triple[2];
+    const options = uniqueDistractors(answer, 3, [-3,-2,-1,1,2,3], 1);
+    return { kind, sceneName, triple, pos, answer, options };
+  }
+
+  function genWelcheStrasse(range){
+    const correctStart = randInt(1, Math.max(1,range-2));
+    const correctTriple = [correctStart, correctStart+1, correctStart+2];
+    function isConsecutive(t){ return t[1]-t[0]===1 && t[2]-t[1]===1; }
+    function wrongTriple(){
+      let guard=0;
+      while(guard<30){
+        guard++;
+        const s = randInt(1, Math.max(1,range-2));
+        const t = [s,s+1,s+2];
+        const idx = randInt(0,2);
+        const delta = pick([-2,-1,1,2]);
+        t[idx] = t[idx]+delta;
+        if(t[idx]<1) continue;
+        if(isConsecutive(t)) continue;
+        return t;
+      }
+      // Rueckfall: garantiert nicht-konsekutiv
+      return [correctStart, correctStart+1, correctStart+3];
+    }
+    const options = [correctTriple];
+    let guard=0;
+    while(options.length<3 && guard<30){
+      guard++;
+      const w = wrongTriple();
+      if(options.some(o=>o.join(',')===w.join(','))) continue;
+      options.push(w);
+    }
+    return { kind:'welcheStrasse', sceneName:'Welche Straße stimmt?', options: shuffle(options), correctKey: correctTriple.join(',') };
+  }
+
+  function genNachbarnMitZehner(range){
+    // Manchmal bewusst einen vollen Zehner als Mittelzahl waehlen (z.B. 30, 40, ...),
+    // damit auch dessen direkte Nachbarn (29/31) geuebt werden - nicht nur beliebige Zahlen.
+    const useRoundTen = Math.random() < 0.4;
+    let n;
+    if(useRoundTen){
+      const tensOptions = [];
+      for(let t=10;t<=range;t+=10) tensOptions.push(t);
+      n = pick(tensOptions);
+    } else {
+      n = randInt(5, range-1);
+    }
+    const leftCorrect = n-1, rightCorrect = n+1;
+    const [tenLower, tenUpper] = neighborBase(n, 10);
+    const leftOpts = uniqueDistractors(leftCorrect, 2, [-2,-1,1,2], 1);
+    const rightOpts = uniqueDistractors(rightCorrect, 2, [-2,-1,1,2], 1);
+    const tenLowerOpts = uniqueDistractors(tenLower, 2, [-20,-10,10,20], 0);
+    const tenUpperOpts = uniqueDistractors(tenUpper, 2, [-20,-10,10,20], 10);
+    return { kind:'nachbarnMitZehner', sceneName:'Nachbarn und Nachbarzehner', n, leftCorrect, rightCorrect, tenLower, tenUpper, leftOpts, rightOpts, tenLowerOpts, tenUpperOpts };
+  }
+
+  function genNachbarBase(range, base, kind, sceneName, minN, maxN){
+    const n = randInt(minN, maxN);
+    const [lower, upper] = neighborBase(n, base);
+    const lowerOpts = uniqueDistractors(lower, 2, [-2*base,-base,base,2*base], base);
+    const upperOpts = uniqueDistractors(upper, 2, [-2*base,-base,base,2*base], base);
+    return { kind, sceneName, n, lower, upper, lowerOpts, upperOpts };
+  }
+
+  function pickGenerator(range){
+    const generators = [
+      { type:'nachbarn', weight:1, gen:()=>genNachbarn(range) },
+      { type:'missingHouse', weight:1, gen:()=>genMissingHouse(range,'missingHouse','Welches Haus fehlt?') },
+      { type:'welcheStrasse', weight:1, gen:()=>genWelcheStrasse(range) },
+      { type:'zweiWeiter', weight:1, gen:()=>genMissingHouse(range,'zweiWeiter','Wer wohnt zwei Häuser weiter?') }
+    ];
+    if(range>=100){
+      generators.push({ type:'nachbarzehner', weight:1, gen:()=>genNachbarBase(range,10,'nachbarzehner','Finde die Nachbarzehner.',2,range-1) });
+      generators.push({ type:'nachbarnMitZehner', weight:1, gen:()=>genNachbarnMitZehner(range) });
+    }
+    if(range>=1000){
+      generators.push({ type:'nachbarhunderter', weight:1, gen:()=>genNachbarBase(range,100,'nachbarhunderter','Finde die Nachbarhunderter.',20,range-1) });
+    }
+    const lastType = state.usedTypes.length ? state.usedTypes[state.usedTypes.length-1] : null;
+    const recentCount = state.usedTypes.filter(t=>t===lastType).length;
+    let pool = generators;
+    if(lastType && recentCount>=2){
+      pool = generators.filter(g=>g.type!==lastType);
+      if(pool.length===0) pool = generators;
+    }
+    const chosen = pick(pool);
+    const task = chosen.gen();
+    state.usedTypes.push(chosen.type);
+    if(state.usedTypes.length>4) state.usedTypes.shift();
+    return task;
+  }
+
+  /* =========================================================
+     HAUS-SVG (mehrere Varianten)
+     ========================================================= */
+  const HOUSE_COLORS = ['var(--altrosa)','var(--salbei)','var(--gelb)','var(--terrakotta)','var(--hellblau)'];
+  const HOUSE_DARK = { 'var(--altrosa)':'var(--altrosa-dark)', 'var(--salbei)':'var(--salbei-dark)', 'var(--gelb)':'var(--gelb-dark)', 'var(--terrakotta)':'var(--terrakotta-dark)', 'var(--hellblau)':'var(--hellblau-dark)' };
+
+  function houseSvg(variant, color, seed){
+    const dark = HOUSE_DARK[color] || 'var(--ink)';
+    const roofType = variant % 3; // 0 Giebel, 1 flach, 2 Erker/abgerundet
+    const winStyle = seed % 2;
+    const hasFlower = seed % 3 === 0;
+    const hasTree = seed % 4 === 1;
+    let roof = '';
+    if(roofType===0){
+      roof = `<path d="M6,42 L50,10 L94,42 Z" fill="${dark}"/>`;
+    } else if(roofType===1){
+      roof = `<rect x="10" y="28" width="80" height="12" rx="3" fill="${dark}"/>`;
+    } else {
+      roof = `<path d="M10,40 Q50,8 90,40 Z" fill="${dark}"/>`;
+    }
+    const bodyTop = roofType===0 ? 42 : roofType===1 ? 38 : 38;
+    const windows = winStyle===0
+      ? `<rect x="20" y="${bodyTop+14}" width="16" height="16" rx="2" fill="#fdf8ec" stroke="${dark}" stroke-width="2"/>
+         <rect x="64" y="${bodyTop+14}" width="16" height="16" rx="2" fill="#fdf8ec" stroke="${dark}" stroke-width="2"/>`
+      : `<circle cx="28" cy="${bodyTop+22}" r="9" fill="#fdf8ec" stroke="${dark}" stroke-width="2"/>
+         <circle cx="72" cy="${bodyTop+22}" r="9" fill="#fdf8ec" stroke="${dark}" stroke-width="2"/>`;
+    const door = `<rect x="42" y="${bodyTop+34}" width="16" height="26" rx="2" fill="${dark}"/><circle cx="55" cy="${bodyTop+47}" r="1.6" fill="#fdf8ec"/>`;
+    const steps = `<rect x="38" y="${bodyTop+60}" width="24" height="4" fill="${dark}" opacity="0.5"/><rect x="40" y="${bodyTop+64}" width="20" height="4" fill="${dark}" opacity="0.5"/>`;
+    const flower = hasFlower ? `<rect x="14" y="${bodyTop+60}" width="14" height="8" rx="2" fill="${dark}"/><circle cx="17" cy="${bodyTop+58}" r="3" fill="var(--altrosa)"/><circle cx="21" cy="${bodyTop+57}" r="3" fill="var(--gelb)"/><circle cx="25" cy="${bodyTop+58}" r="3" fill="var(--hellblau)"/>` : '';
+    const tree = hasTree ? `<circle cx="88" cy="${bodyTop+58}" r="10" fill="var(--gruen)"/><rect x="86" y="${bodyTop+64}" width="4" height="10" fill="#8a6a4a"/>` : '';
+    const bodyH = 100-bodyTop-4;
+    return `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+      ${roof}
+      <rect x="10" y="${bodyTop}" width="80" height="${bodyH}" fill="${color}" stroke="${dark}" stroke-width="2.5"/>
+      ${windows}
+      ${door}
+      ${steps}
+      ${flower}
+      ${tree}
+    </svg>`;
+  }
+
+  function buildHouse(number, opts){
+    opts = opts || {};
+    const slot = document.createElement('div');
+    slot.className = 'house-slot';
+    slot.style.width = (opts.width || 'min(22vw,110px)');
+    const svgWrap = document.createElement('div');
+    svgWrap.className = 'house-svg-wrap';
+    const variant = opts.variant!==undefined ? opts.variant : randInt(0,2);
+    const color = opts.color || pick(HOUSE_COLORS);
+    const seed = opts.seed!==undefined ? opts.seed : randInt(0,10);
+    svgWrap.innerHTML = houseSvg(variant, color, seed);
+    slot.appendChild(svgWrap);
+    const plate = document.createElement('div');
+    plate.className = 'house-plate' + (opts.unknown ? ' unknown' : '');
+    plate.style.fontSize = 'clamp(16px, ' + (opts.plateVw || 4) + 'vw, ' + (opts.plateMax || 34) + 'px)';
+    plate.textContent = opts.unknown ? '?' : String(number);
+    slot.appendChild(plate);
+    slot._plate = plate;
+    return slot;
+  }
+
+  /* =========================================================
+     SPRACHAUSGABE
+     ========================================================= */
+  function speak(text){
+    try{
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'de-DE'; u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    }catch(err){}
+  }
+  function setPrompt(text, spokenText){
+    els.promptText.textContent = text;
+    const toSpeak = spokenText || text;
+    els.btnSpeakTask.onclick = () => speak(toSpeak);
+  }
+  function showFeedback(msg, good){
+    els.feedbackMsg.textContent = msg;
+    els.feedbackMsg.classList.toggle('good', !!good);
+    els.feedbackMsg.classList.add('show');
+  }
+  function triggerWrongEl(el){
+    el.classList.add('wrong-shake');
+    after(420, ()=>el.classList.remove('wrong-shake'));
+  }
+
+  const GOOD_FEEDBACK = ['Richtig!','Super!','Genau!','Das stimmt!','Nachbarn gefunden!'];
+  const BAD_FEEDBACK = ['Fast! Schau dir die Häuser noch einmal an.','Probier es noch einmal.','Fast geschafft!'];
+
+  /* =========================================================
+     AUFGABE RENDERN
+     ========================================================= */
+  let taskSelection = null;
+
+  function newTask(forcedTask){
+    state.locked = false;
+    els.feedbackMsg.classList.remove('show','good');
+    els.feedbackMsg.textContent = '';
+    const task = forcedTask || pickGenerator(state.range);
+    state.currentTask = task;
+    els.taskBody.innerHTML = '';
+    taskSelection = null;
+
+    if(task.kind==='nachbarn'){
+      setPrompt('Wer wohnt nebenan?');
+      taskSelection = { left:false, right:false };
+      const scene = document.createElement('div');
+      scene.className = 'street-scene';
+      const row = document.createElement('div');
+      row.className = 'houses-row';
+      const seed = randInt(0,10);
+      const leftHouse = buildHouse(null, { unknown:true, variant:0, seed:seed, color:HOUSE_COLORS[0] });
+      const midHouse = buildHouse(task.mid, { variant:1, seed:seed+1, color:HOUSE_COLORS[1], plateVw:5, plateMax:40 });
+      const rightHouse = buildHouse(null, { unknown:true, variant:2, seed:seed+2, color:HOUSE_COLORS[2] });
+      row.appendChild(leftHouse); row.appendChild(midHouse); row.appendChild(rightHouse);
+      scene.appendChild(row);
+      const ground = document.createElement('div'); ground.className='street-ground';
+      scene.appendChild(ground);
+      els.taskBody.appendChild(scene);
+
+      const groups = document.createElement('div');
+      groups.className = 'side-groups';
+      function makeGroup(label, opts, correct, onCorrect, plateEl){
+        const g = document.createElement('div'); g.className='side-group';
+        const lbl = document.createElement('div'); lbl.className='side-group-label'; lbl.textContent=label;
+        g.appendChild(lbl);
+        const rowEl = document.createElement('div'); rowEl.className='choice-row';
+        opts.forEach(val=>{
+          const card = document.createElement('button');
+          card.className='choice-card';
+          card.textContent = val;
+          card.setAttribute('aria-label', label+': '+val);
+          card.addEventListener('click', ()=>{
+            if(state.locked) return;
+            if(val===correct){
+              card.classList.add('correct-pulse');
+              card.disabled = true;
+              rowEl.querySelectorAll('.choice-card').forEach(c=>{ if(c!==card) c.classList.add('used'); });
+              onCorrect();
+            } else {
+              triggerWrongEl(card);
+              showFeedback(pick(BAD_FEEDBACK));
+            }
+          });
+          rowEl.appendChild(card);
+        });
+        g.appendChild(rowEl);
+        return g;
+      }
+      function finishBoth(){
+        state.locked = true;
+        showFeedback(pick(GOOD_FEEDBACK), true);
+        after(700, onTaskSuccess);
+      }
+      const gLeft = makeGroup('Links', task.leftOpts, task.leftCorrect, ()=>{
+        taskSelection.left=true;
+        leftHouse._plate.textContent = task.leftCorrect;
+        leftHouse._plate.classList.remove('unknown','target-blink');
+        gRight.classList.remove('group-locked');
+        rightHouse._plate.classList.add('target-blink');
+      });
+      const gRight = makeGroup('Rechts', task.rightOpts, task.rightCorrect, ()=>{
+        taskSelection.right=true;
+        rightHouse._plate.textContent = task.rightCorrect;
+        rightHouse._plate.classList.remove('unknown','target-blink');
+        finishBoth();
+      });
+      gRight.classList.add('group-locked');
+      leftHouse._plate.classList.add('target-blink');
+      groups.appendChild(gLeft); groups.appendChild(gRight);
+      els.taskBody.appendChild(groups);
+    }
+
+    else if(task.kind==='nachbarnMitZehner'){
+      setPrompt('Wer wohnt nebenan?');
+      taskSelection = { phase:1 };
+      const scene = document.createElement('div');
+      scene.className = 'street-scene';
+      const row = document.createElement('div');
+      row.className = 'houses-row';
+      const seed = randInt(0,10);
+      const leftHouse = buildHouse(null, { unknown:true, variant:0, seed:seed, color:HOUSE_COLORS[0] });
+      const midHouse = buildHouse(task.n, { variant:1, seed:seed+1, color:HOUSE_COLORS[1], plateVw:5, plateMax:40 });
+      const rightHouse = buildHouse(null, { unknown:true, variant:2, seed:seed+2, color:HOUSE_COLORS[2] });
+      row.appendChild(leftHouse); row.appendChild(midHouse); row.appendChild(rightHouse);
+      scene.appendChild(row);
+      const ground = document.createElement('div'); ground.className='street-ground';
+      scene.appendChild(ground);
+      els.taskBody.appendChild(scene);
+
+      const groups = document.createElement('div');
+      groups.className = 'side-groups';
+      els.taskBody.appendChild(groups);
+
+      function makeGroup(label, opts, correct, onCorrect){
+        const g = document.createElement('div'); g.className='side-group';
+        const lbl = document.createElement('div'); lbl.className='side-group-label'; lbl.textContent=label;
+        g.appendChild(lbl);
+        const rowEl = document.createElement('div'); rowEl.className='choice-row';
+        opts.forEach(val=>{
+          const card = document.createElement('button');
+          card.className='choice-card';
+          card.textContent = val;
+          card.addEventListener('click', ()=>{
+            if(state.locked) return;
+            if(val===correct){
+              card.classList.add('correct-pulse');
+              card.disabled = true;
+              rowEl.querySelectorAll('.choice-card').forEach(c=>{ if(c!==card) c.classList.add('used'); });
+              onCorrect();
+            } else {
+              triggerWrongEl(card);
+              showFeedback(pick(BAD_FEEDBACK));
+            }
+          });
+          rowEl.appendChild(card);
+        });
+        g.appendChild(rowEl);
+        return g;
+      }
+
+      const gLeft1 = makeGroup('Links', task.leftOpts, task.leftCorrect, ()=>{
+        leftHouse._plate.textContent = task.leftCorrect;
+        leftHouse._plate.classList.remove('unknown','target-blink');
+        gRight1.classList.remove('group-locked');
+        rightHouse._plate.classList.add('target-blink');
+      });
+      const gRight1 = makeGroup('Rechts', task.rightOpts, task.rightCorrect, ()=>{
+        rightHouse._plate.textContent = task.rightCorrect;
+        rightHouse._plate.classList.remove('unknown','target-blink');
+        state.locked = true;
+        showFeedback(pick(GOOD_FEEDBACK), true);
+        after(650, startZehnerPhase);
+      });
+      gRight1.classList.add('group-locked');
+      leftHouse._plate.classList.add('target-blink');
+      groups.appendChild(gLeft1); groups.appendChild(gRight1);
+
+      function startZehnerPhase(){
+        state.locked = false;
+        els.feedbackMsg.classList.remove('show','good');
+        setPrompt('Wie heißen die Nachbarzehner?', `Wie heißen die Nachbarzehner von ${task.n}?`);
+        els.taskBody.innerHTML = '';
+        taskSelection.phase = 2;
+
+        const scene2 = document.createElement('div');
+        scene2.className = 'street-scene';
+        const row2 = document.createElement('div');
+        row2.className = 'houses-row';
+        const tenLeftHouse = buildHouse(null, { unknown:true, variant:1, seed:seed+3, color:HOUSE_COLORS[3], width:'min(20vw,95px)' });
+        const midHouse2 = buildHouse(task.n, { variant:0, seed:seed+4, color:HOUSE_COLORS[1], plateVw:5.5, plateMax:44, width:'min(26vw,130px)' });
+        const tenRightHouse = buildHouse(null, { unknown:true, variant:1, seed:seed+5, color:HOUSE_COLORS[4], width:'min(20vw,95px)' });
+        row2.appendChild(tenLeftHouse); row2.appendChild(midHouse2); row2.appendChild(tenRightHouse);
+        scene2.appendChild(row2);
+        const ground2 = document.createElement('div'); ground2.className='street-ground';
+        scene2.appendChild(ground2);
+        els.taskBody.appendChild(scene2);
+
+        const groups2 = document.createElement('div');
+        groups2.className = 'side-groups';
+        els.taskBody.appendChild(groups2);
+
+        const gLeft2 = makeGroup('Davor', task.tenLowerOpts, task.tenLower, ()=>{
+          tenLeftHouse._plate.textContent = task.tenLower;
+          tenLeftHouse._plate.classList.remove('unknown','target-blink');
+          gRight2.classList.remove('group-locked');
+          tenRightHouse._plate.classList.add('target-blink');
+        });
+        const gRight2 = makeGroup('Danach', task.tenUpperOpts, task.tenUpper, ()=>{
+          tenRightHouse._plate.textContent = task.tenUpper;
+          tenRightHouse._plate.classList.remove('unknown','target-blink');
+          state.locked = true;
+          showFeedback(pick(GOOD_FEEDBACK), true);
+          after(700, onTaskSuccess);
+        });
+        gRight2.classList.add('group-locked');
+        tenLeftHouse._plate.classList.add('target-blink');
+        groups2.appendChild(gLeft2); groups2.appendChild(gRight2);
+      }
+    }
+
+    else if(task.kind==='missingHouse' || task.kind==='zweiWeiter'){
+      setPrompt(task.kind==='zweiWeiter' ? 'Wer wohnt zwei Häuser weiter?' : 'Welches Haus fehlt?');
+      const scene = document.createElement('div');
+      scene.className = 'street-scene';
+      const row = document.createElement('div');
+      row.className = 'houses-row';
+      const seed = randInt(0,10);
+      let blankPlateEl = null;
+      task.triple.forEach((val,i)=>{
+        const isBlank = (i===0 && task.pos==='left') || (i===1 && task.pos==='mid') || (i===2 && task.pos==='right');
+        const h = buildHouse(val, { unknown:isBlank, variant:i, seed:seed+i, color:HOUSE_COLORS[i], plateVw: i===1?5:4, plateMax: i===1?40:34 });
+        if(isBlank) blankPlateEl = h._plate;
+        row.appendChild(h);
+      });
+      scene.appendChild(row);
+      const ground = document.createElement('div'); ground.className='street-ground';
+      scene.appendChild(ground);
+      els.taskBody.appendChild(scene);
+
+      const choiceRow = document.createElement('div');
+      choiceRow.className = 'choice-row';
+      task.options.forEach(val=>{
+        const card = document.createElement('button');
+        card.className='choice-card';
+        card.textContent = val;
+        card.addEventListener('click', ()=>{
+          if(state.locked) return;
+          if(val===task.answer){
+            state.locked = true;
+            card.classList.add('correct-pulse');
+            blankPlateEl.textContent = val;
+            blankPlateEl.classList.remove('unknown');
+            blankPlateEl.classList.add('correct-pulse');
+            showFeedback(pick(GOOD_FEEDBACK), true);
+            after(700, onTaskSuccess);
+          } else {
+            triggerWrongEl(card);
+            showFeedback(pick(BAD_FEEDBACK));
+          }
+        });
+        choiceRow.appendChild(card);
+      });
+      els.taskBody.appendChild(choiceRow);
+    }
+
+    else if(task.kind==='welcheStrasse'){
+      setPrompt('Welche Häuserreihe stimmt?');
+      const isSmall = window.innerWidth < 480;
+      const compare = document.createElement('div');
+      compare.className = 'streets-compare' + (isSmall ? '' : ' row-mode');
+      const seed = randInt(0,10);
+      task.options.forEach((triple, rowIdx)=>{
+        const optEl = document.createElement('button');
+        optEl.className = 'street-option';
+        const mini = document.createElement('div'); mini.className='mini-houses';
+        triple.forEach((v,i)=>{
+          const houseWrap = document.createElement('div'); houseWrap.className='mini-house';
+          const svgWrap = document.createElement('div'); svgWrap.className='mini-house-svg';
+          svgWrap.innerHTML = houseSvg((rowIdx+i)%3, HOUSE_COLORS[(rowIdx*3+i)%HOUSE_COLORS.length], seed+rowIdx*3+i);
+          houseWrap.appendChild(svgWrap);
+          const p = document.createElement('div'); p.className='mini-plate'; p.textContent=v;
+          houseWrap.appendChild(p);
+          mini.appendChild(houseWrap);
+        });
+        optEl.appendChild(mini);
+        optEl.addEventListener('click', ()=>{
+          if(state.locked) return;
+          if(triple.join(',')===task.correctKey){
+            state.locked = true;
+            optEl.classList.add('correct-pulse');
+            showFeedback(pick(GOOD_FEEDBACK), true);
+            after(700, onTaskSuccess);
+          } else {
+            triggerWrongEl(optEl);
+            showFeedback(pick(BAD_FEEDBACK));
+          }
+        });
+        compare.appendChild(optEl);
+      });
+      els.taskBody.appendChild(compare);
+    }
+
+    else if(task.kind==='nachbarzehner' || task.kind==='nachbarhunderter'){
+      const base = task.kind==='nachbarzehner' ? 10 : 100;
+      setPrompt(`${task.n}`, `Finde die Nachbar${base===10?'zehner':'hunderter'} von ${task.n}.`);
+      taskSelection = { left:false, right:false };
+      const scene = document.createElement('div');
+      scene.className = 'street-scene';
+      const row = document.createElement('div');
+      row.className = 'houses-row';
+      const seed = randInt(0,10);
+      const leftHouse = buildHouse(null, { unknown:true, variant:1, seed:seed, color:HOUSE_COLORS[3], width:'min(20vw,95px)' });
+      const midHouse = buildHouse(task.n, { variant:0, seed:seed+1, color:HOUSE_COLORS[1], plateVw:5.5, plateMax:44, width:'min(26vw,130px)' });
+      const rightHouse = buildHouse(null, { unknown:true, variant:1, seed:seed+2, color:HOUSE_COLORS[4], width:'min(20vw,95px)' });
+      row.appendChild(leftHouse); row.appendChild(midHouse); row.appendChild(rightHouse);
+      scene.appendChild(row);
+      const ground = document.createElement('div'); ground.className='street-ground';
+      scene.appendChild(ground);
+      els.taskBody.appendChild(scene);
+
+      const groups = document.createElement('div');
+      groups.className = 'side-groups';
+      function makeGroup(label, opts, correct, onCorrect){
+        const g = document.createElement('div'); g.className='side-group';
+        const lbl = document.createElement('div'); lbl.className='side-group-label'; lbl.textContent=label;
+        g.appendChild(lbl);
+        const rowEl = document.createElement('div'); rowEl.className='choice-row';
+        opts.forEach(val=>{
+          const card = document.createElement('button');
+          card.className='choice-card';
+          card.textContent = val;
+          card.addEventListener('click', ()=>{
+            if(state.locked) return;
+            if(val===correct){
+              card.classList.add('correct-pulse');
+              card.disabled = true;
+              rowEl.querySelectorAll('.choice-card').forEach(c=>{ if(c!==card) c.classList.add('used'); });
+              onCorrect();
+            } else {
+              triggerWrongEl(card);
+              showFeedback(pick(BAD_FEEDBACK));
+            }
+          });
+          rowEl.appendChild(card);
+        });
+        g.appendChild(rowEl);
+        return g;
+      }
+      function finishBoth(){
+        state.locked = true;
+        showFeedback(pick(GOOD_FEEDBACK), true);
+        after(700, onTaskSuccess);
+      }
+      const gLeft = makeGroup('Davor', task.lowerOpts, task.lower, ()=>{
+        taskSelection.left=true;
+        leftHouse._plate.textContent = task.lower;
+        leftHouse._plate.classList.remove('unknown','target-blink');
+        gRight.classList.remove('group-locked');
+        rightHouse._plate.classList.add('target-blink');
+      });
+      const gRight = makeGroup('Danach', task.upperOpts, task.upper, ()=>{
+        taskSelection.right=true;
+        rightHouse._plate.textContent = task.upper;
+        rightHouse._plate.classList.remove('unknown','target-blink');
+        finishBoth();
+      });
+      gRight.classList.add('group-locked');
+      leftHouse._plate.classList.add('target-blink');
+      groups.appendChild(gLeft); groups.appendChild(gRight);
+      els.taskBody.appendChild(groups);
+    }
+  }
+
+  function onTaskSuccess(){
+    state.progress = Math.min(ROUND_TARGET, state.progress+1);
+    els.progressCount.textContent = state.progress;
+    const lights = els.progressLights.children;
+    if(lights[state.progress-1]) lights[state.progress-1].classList.add('lit');
+    if(state.progress >= ROUND_TARGET){
+      after(500, endGame);
+    } else {
+      after(350, () => newTask());
+    }
+  }
+
+  /* =========================================================
+     START / ENDE
+     ========================================================= */
+  function buildProgressLights(){
+    els.progressLights.innerHTML = '';
+    for(let i=0;i<ROUND_TARGET;i++){
+      const l = document.createElement('div');
+      l.className = 'light-house';
+      els.progressLights.appendChild(l);
+    }
+  }
+
+  function startGame(){
+    clearPendingTimers();
+    try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
+    state.progress = 0;
+    state.locked = false;
+    state.usedTypes = [];
+
+    els.screenStart.hidden = true;
+    els.screenEnd.hidden = true;
+    els.screenGame.hidden = false;
+
+    els.progressCount.textContent = '0';
+    buildProgressLights();
+    newTask();
+  }
+
+  function endGame(){
+    clearPendingTimers();
+    els.screenGame.hidden = true;
+    els.screenEnd.hidden = false;
+    const wrap = document.getElementById('end-street-wrap');
+    wrap.innerHTML = '';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; gap:2vw; justify-content:center; align-items:flex-end;';
+    for(let i=0;i<5;i++){
+      const h = buildHouse(null, { variant:i%3, seed:i*2, color:HOUSE_COLORS[i%HOUSE_COLORS.length], width:'18%' });
+      h._plate.style.display = 'none';
+      row.appendChild(h);
+    }
+    wrap.appendChild(row);
+    sndWin();
+    runConfetti();
+  }
+
+  els.btnStart.addEventListener('click', () => { startGame(); });
+  document.getElementById('btn-again').addEventListener('click', () => {
+    els.screenEnd.hidden = true;
+    startGame();
+  });
+  document.getElementById('btn-other-range').addEventListener('click', () => {
+    clearPendingTimers();
+    try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
+    els.screenEnd.hidden = true;
+    els.screenGame.hidden = true;
+    els.screenStart.hidden = false;
+  });
+  els.btnSound.addEventListener('click', () => {
+    state.soundOn = !state.soundOn;
+    els.btnSound.textContent = state.soundOn ? '🔊' : '🔇';
+    els.btnSound.setAttribute('aria-pressed', String(state.soundOn));
+  });
+
+  /* =========================================================
+     SOUND
+     ========================================================= */
+  let actx = null;
+  function ensureAudio(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } }
+  document.addEventListener('pointerdown', ensureAudio, { once:true });
+  function tone(freq, dur, type, gainPeak, delay){
+    if(!state.soundOn || !actx) return;
+    try{
+      const t0 = actx.currentTime + (delay||0);
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = type||'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(gainPeak||0.14, t0+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+      osc.connect(gain).connect(actx.destination);
+      osc.start(t0); osc.stop(t0+dur+0.03);
+    }catch(err){}
+  }
+  function sndWin(){ [523,659,784,1046,1318].forEach((f,i)=>tone(f,0.3,'triangle',0.13,i*0.11)); }
+
+  /* =========================================================
+     KONFETTI
+     ========================================================= */
+  function runConfetti(){
+    const canvas = document.getElementById('confetti-canvas');
+    canvas.hidden = false;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const colors = ['#d98a92','#8fa888','#eec14a','#d97e55','#8fb9c9'];
+    const pieces = Array.from({length:100}, () => ({
+      x: Math.random()*canvas.width, y:-20-Math.random()*canvas.height*0.5,
+      w:4+Math.random()*6, h:6+Math.random()*10,
+      vy:2+Math.random()*3, vx:-1+Math.random()*2,
+      rot:Math.random()*360, vr:-6+Math.random()*12,
+      color: colors[Math.floor(Math.random()*colors.length)]
+    }));
+    let frames = 0;
+    function loop(){
+      frames++;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pieces.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle=p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        ctx.restore();
+      });
+      if(frames<200) requestAnimationFrame(loop);
+      else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.hidden = true; }
+    }
+    loop();
+  }
+
+  window.__znDebug = { state, forceTask: (t) => newTask(t), getSelection: () => taskSelection, neighborBase };
+
+})();
+</script>
+
+</body>
+</html>
