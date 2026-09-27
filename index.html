@@ -85,19 +85,36 @@
 
   .range-choices{ display:flex; gap:2.6vw; flex-wrap:wrap; justify-content:center; max-width:680px; }
   .range-card{
+    position:relative;
     background:var(--panel); border:2.6px solid var(--panel-edge); border-radius:16px 16px 10px 10px;
     padding:0; min-width:min(160px,32vw); flex:1; overflow:hidden;
     box-shadow:0 6px 0 rgba(58,50,38,.14);
     transition:transform .1s ease;
   }
-  .range-card .roofline{ height:10px; background:var(--terrakotta); border-radius:14px 14px 0 0; margin:-2.6px -2.6px 0; }
-  .range-card .card-body{ padding:1.8vh 3vw 2vh; }
+  .range-card .roofline{ position:absolute; top:-2.6px; left:-2.6px; right:-2.6px; height:12px; background:var(--terrakotta); border-radius:16px 16px 0 0; }
+  .range-card .card-body{ padding:calc(1.8vh + 8px) 3vw 2vh; }
   .range-card .big{ display:block; font-family:var(--font-display); font-weight:800; font-size:clamp(15px,2.3vw,20px); color:var(--ink); }
   .range-card .sub{ display:block; font-size:clamp(9px,1.3vw,11px); color:var(--muted); font-weight:600; margin-top:.5vh; }
-  .range-card.selected{ border-color:var(--salbei-dark); box-shadow:0 6px 0 var(--salbei-dark); }
-  .range-card.selected .roofline{ background:var(--salbei-dark); }
-  .range-card:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(58,50,38,.14); }
-  .range-card.selected:active{ box-shadow:0 2px 0 var(--salbei-dark); }
+  .range-card.theme-salbei{ border-color:var(--salbei-dark); box-shadow:0 6px 0 var(--salbei-dark); }
+  .range-card.theme-salbei .roofline{ background:var(--salbei-dark); }
+  .range-card.theme-hellblau{ border-color:var(--hellblau-dark); box-shadow:0 6px 0 var(--hellblau-dark); }
+  .range-card.theme-hellblau .roofline{ background:var(--hellblau-dark); }
+  .range-card.theme-altrosa{ border-color:var(--altrosa-dark); box-shadow:0 6px 0 var(--altrosa-dark); }
+  .range-card.theme-altrosa .roofline{ background:var(--altrosa-dark); }
+  .range-card:active{ transform:translateY(3px); }
+  .range-card.theme-salbei:active{ box-shadow:0 2px 0 var(--salbei-dark); }
+  .range-card.theme-hellblau:active{ box-shadow:0 2px 0 var(--hellblau-dark); }
+  .range-card.theme-altrosa:active{ box-shadow:0 2px 0 var(--altrosa-dark); }
+  .range-card.selected{ border-width:4px; }
+  .range-card .check-badge{
+    position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%;
+    background:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;
+    opacity:0; transform:scale(.6); transition:opacity .15s ease, transform .15s ease; z-index:2;
+  }
+  .theme-salbei .check-badge{ color:var(--salbei-dark); }
+  .theme-hellblau .check-badge{ color:var(--hellblau-dark); }
+  .theme-altrosa .check-badge{ color:var(--altrosa-dark); }
+  .range-card.selected .check-badge{ opacity:1; transform:scale(1); }
 
   .start-btn{
     font-family:var(--font-display); font-weight:800; font-size:clamp(17px,2.6vw,23px);
@@ -253,16 +270,19 @@
     <p class="subtitle-big">„Wer wohnt nebenan?"</p>
     <p class="intro-line">Entdecke die Nachbarn der Zahlen!</p>
     <div class="range-choices" id="range-choices">
-      <button class="range-card" data-range="20">
+      <button class="range-card theme-salbei" data-range="20">
         <div class="roofline"></div>
+        <div class="check-badge">✓</div>
         <div class="card-body"><span class="big">🏠 bis 20</span><span class="sub">Klasse 1</span></div>
       </button>
-      <button class="range-card" data-range="100">
+      <button class="range-card theme-hellblau" data-range="100">
         <div class="roofline"></div>
+        <div class="check-badge">✓</div>
         <div class="card-body"><span class="big">🏠 bis 100</span><span class="sub">Klasse 2</span></div>
       </button>
-      <button class="range-card" data-range="1000">
+      <button class="range-card theme-altrosa" data-range="1000">
         <div class="roofline"></div>
+        <div class="check-badge">✓</div>
         <div class="card-body"><span class="big">🏠 bis 1000</span><span class="sub">Klasse 3</span></div>
       </button>
     </div>
